@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Tuan T. Nguyen</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08090d;--bg2:#0f1119;--card:#0f1119;
+  --accent:#7a9fc2;--accent2:#4e7a9e;
+  --text:#d4d8e2;--muted:#5a6070;
+  --border:rgba(122,159,194,.12);
+  --serif:'Georgia',serif;
+  --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;overflow-x:hidden}
+
+/* ── BACKGROUND ── */
+#bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none}
+#mesh{position:absolute;inset:0;width:100%;height:100%}
+/* noise texture overlay */
+#bg-layer::before{
+  content:'';position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size:200px 200px;opacity:.025;mix-blend-mode:overlay
+}
+/* radial gradient depth pools */
+#bg-layer::after{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 20%, rgba(122,159,194,.045) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 60% at 85% 70%, rgba(78,122,158,.035) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 100%, rgba(122,159,194,.025) 0%, transparent 55%);
+}
+/* subtle horizontal scan lines */
+.scanlines{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(122,159,194,.008) 3px,rgba(122,159,194,.008) 4px);pointer-events:none}
+
+#content{position:relative;z-index:10}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;height:60px;border-bottom:1px solid var(--border);background:rgba(8,9,13,.88);backdrop-filter:blur(16px)}
+.nav-id{display:flex;flex-direction:column;line-height:1.25}
+.nav-name{font-size:.85rem;font-weight:400;letter-spacing:.1em;color:var(--text)}
+.nav-sub{font-size:.65rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.nav-links{display:flex;gap:1.8rem;list-style:none}
+.nav-links a{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;cursor:pointer}
+.nav-links a:hover,.nav-links a.active{color:var(--accent)}
+
+/* PAGES */
+.page{display:none;min-height:100vh;padding-top:60px}
+.page.active{display:block}
+
+/* media placeholder */
+.media-ph{display:flex;flex-direction:column;align-items:center;gap:.6rem;color:var(--muted);width:100%;height:100%;justify-content:center}
+.media-ph-icon{width:44px;height:44px;border:1px dashed rgba(122,159,194,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem}
+.media-ph-label{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(122,159,194,.3);text-align:center}
+.media-ph-ratio{font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(122,159,194,.18);text-align:center;margin-top:.15rem}
+
+/* ══ HOME ══ */
+.cover{position:relative;height:calc(100vh - 60px);overflow:hidden;border-bottom:1px solid var(--border)}
+.cover-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.cover-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.8rem;background:rgba(8,9,13,.2)}
+.cover-ph-icon{width:60px;height:60px;border:1px dashed rgba(122,159,194,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.cover-ph-label{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(122,159,194,.3)}
+.cover-ph-ratio{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(122,159,194,.2);margin-top:.2rem;text-align:center}
+.cover-vignette{position:absolute;inset:0;background:linear-gradient(to right,rgba(8,9,13,.85) 0%,rgba(8,9,13,.28) 55%,rgba(8,9,13,.55) 100%),linear-gradient(to top,rgba(8,9,13,.72) 0%,transparent 50%)}
+.cover-overlay{position:absolute;inset:0;display:grid;grid-template-rows:1fr auto;padding:3.5rem}
+.cover-top{display:flex;justify-content:space-between;align-items:flex-start}
+.cover-tag{font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(212,216,226,.5);border:1px solid rgba(212,216,226,.15);padding:.3rem .8rem}
+.cover-issue{font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(212,216,226,.4)}
+.cover-vol{font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:1.2rem;opacity:.85}
+.cover-name{font-family:var(--serif);font-size:clamp(3.5rem,8vw,7rem);line-height:.95;font-weight:400;letter-spacing:-.02em;margin-bottom:1rem;color:#fff}
+.cover-name em{font-style:italic;color:var(--accent)}
+.cover-rule{width:60px;height:1px;background:var(--accent);opacity:.6;margin-bottom:1.2rem}
+.cover-tagline{font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(212,216,226,.65);margin-bottom:2rem;max-width:380px;line-height:1.7}
+.cover-bar{display:flex;gap:2rem;align-items:center}
+.cover-pill{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(212,216,226,.45);border:1px solid rgba(122,159,194,.2);padding:.25rem .7rem}
+.cover-scroll{position:absolute;bottom:2rem;right:2.5rem;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(212,216,226,.35);display:flex;align-items:center;gap:.5rem}
+.cover-scroll-line{width:30px;height:1px;background:rgba(212,216,226,.2)}
+.home-strip{max-width:1200px;margin:0 auto;padding:4rem 3rem}
+.strip-hd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:2.5rem}
+.strip-title{font-family:var(--serif);font-style:italic;font-size:1.4rem;color:var(--accent)}
+.strip-btn{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);cursor:pointer;background:none;border:none;transition:color .2s}
+.strip-btn:hover{color:var(--accent)}
+.proj-strip{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border)}
+.psc{background:var(--bg);padding:1.8rem;cursor:pointer;transition:background .2s}
+.psc:hover{background:var(--card)}.psc:hover .psc-arrow{opacity:1}
+.psc-num{font-size:.65rem;letter-spacing:.16em;color:var(--muted);margin-bottom:.8rem}
+.psc-media{width:100%;aspect-ratio:16/10;background:var(--card);margin-bottom:1.2rem;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.psc-media img,.psc-media video{width:100%;height:100%;object-fit:cover;opacity:.65}
+.psc-title{font-family:var(--serif);font-style:italic;font-size:1.3rem;margin-bottom:.5rem}
+.psc-tags{display:flex;gap:.3rem;flex-wrap:wrap}
+.psc-arrow{opacity:0;transition:opacity .2s;font-size:.7rem;color:var(--accent);margin-top:.6rem;display:block}
+.tag-sm{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);padding:.15rem .4rem}
+
+/* ══ PROJECTS ══ */
+.page-wrap{max-width:1200px;margin:0 auto;padding:4rem 3rem}
+.page-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.page-title{font-family:var(--serif);font-style:italic;font-size:2rem;color:var(--accent)}
+.page-num{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.proj-feature{display:grid;grid-template-columns:180px 1px 1fr;margin-bottom:2.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--border)}
+.proj-feature:last-child{border-bottom:none}
+.proj-meta{padding-right:2rem}
+.proj-div{background:var(--border);margin:0 2rem}
+.proj-num{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
+.proj-title-ed{font-family:var(--serif);font-style:italic;font-size:1.3rem;cursor:pointer;transition:color .2s;line-height:1.2;margin-bottom:.6rem}
+.proj-title-ed:hover{color:var(--accent)}
+.proj-tags-ed{display:flex;gap:.3rem;flex-wrap:wrap}
+.tag-ed{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);padding:.15rem .4rem}
+.proj-media-ed{width:100%;aspect-ratio:16/7;background:var(--card);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;overflow:hidden}
+.proj-media-ed img,.proj-media-ed video{width:100%;height:100%;object-fit:cover;opacity:.65}
+.proj-desc-ed{font-size:.86rem;color:var(--muted);line-height:1.85;margin-bottom:.8rem}
+.proj-read{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;transition:opacity .2s}
+.proj-read:hover{opacity:.6}
+
+/* ══ FSAE ══ */
+.fsae-hero{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);min-height:50vh}
+.fsae-hero-left{padding:4rem 3rem;border-right:1px solid var(--border)}
+.fsae-kicker{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:.8rem}
+.fsae-hed{font-family:var(--serif);font-size:clamp(2rem,4vw,3.2rem);font-style:italic;font-weight:400;line-height:1.1;margin-bottom:1.2rem}
+.fsae-body-txt{font-size:.88rem;color:var(--muted);line-height:1.9;margin-bottom:1.5rem}
+.fsae-stats{display:flex;gap:3rem;padding-top:1.5rem;border-top:1px solid var(--border)}
+.dl-val{font-family:var(--serif);font-style:italic;font-size:1.5rem;color:var(--accent)}
+.dl-lbl{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:.2rem}
+.fsae-hero-right{background:var(--card);display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:320px}
+.fsae-hero-right img,.fsae-hero-right video{width:100%;height:100%;object-fit:cover;opacity:.6}
+.fsae-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.fsae-gal-cell{background:var(--bg);aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.fsae-gal-cell img,.fsae-gal-cell video{width:100%;height:100%;object-fit:cover;opacity:.6}
+
+/* FSAE sub-projects */
+.fsae-subprojects{max-width:1200px;margin:0 auto;padding:4rem 3rem 2rem}
+.fsae-sub-hd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:2.5rem}
+.fsae-sub-title{font-family:var(--serif);font-style:italic;font-size:1.4rem;color:var(--accent)}
+.fsae-sub-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.fsae-sub-card{background:var(--bg);padding:1.8rem;cursor:pointer;transition:background .2s}
+.fsae-sub-card:hover{background:var(--card)}
+.fsae-sub-card:hover .fsae-sub-arrow{opacity:1}
+.fsae-sub-media{width:100%;aspect-ratio:16/9;background:var(--card);display:flex;align-items:center;justify-content:center;margin-bottom:1.2rem;overflow:hidden}
+.fsae-sub-media img,.fsae-sub-media video{width:100%;height:100%;object-fit:cover;opacity:.65}
+.fsae-sub-num{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.fsae-sub-name{font-family:var(--serif);font-style:italic;font-size:1.05rem;margin-bottom:.4rem;line-height:1.2}
+.fsae-sub-desc{font-size:.8rem;color:var(--muted);line-height:1.75}
+.fsae-sub-arrow{opacity:0;transition:opacity .2s;font-size:.7rem;color:var(--accent);margin-top:.8rem;display:block}
+
+.fsae-detail{max-width:1200px;margin:0 auto;padding:2rem 3rem 4rem}
+.fsae-cols{display:grid;grid-template-columns:1fr 1px 1fr}
+.fsae-col{padding:0 2.5rem}.fsae-col:first-child{padding-left:0}
+.fsae-col-div{background:var(--border)}
+.fsae-col-label{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem}
+.fsae-col-body{font-size:.86rem;color:var(--muted);line-height:1.9}
+
+/* ══ EXPERIENCE ══ */
+.exp-item{display:grid;grid-template-columns:1fr 1px 1fr;border-bottom:1px solid var(--border);padding:3rem 0}
+.exp-item:last-child{border-bottom:none}
+.exp-left{padding-right:2.5rem}
+.exp-right-div{background:var(--border);margin:0 2.5rem}
+.exp-right{padding-left:0}
+.exp-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem}
+.exp-meta-col{}
+.exp-date{font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+.exp-org{font-size:.82rem;color:var(--accent);letter-spacing:.06em;margin-bottom:.2rem}
+.exp-role{font-family:var(--serif);font-style:italic;font-size:1.3rem;margin-bottom:.6rem}
+.exp-desc{font-size:.86rem;color:var(--muted);line-height:1.85;margin-bottom:.9rem}
+.exp-bullets{list-style:none;display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.5rem}
+.exp-bullets li{font-size:.82rem;color:var(--muted);line-height:1.7;padding-left:1rem;position:relative}
+.exp-bullets li::before{content:'—';position:absolute;left:0;color:rgba(122,159,194,.3)}
+/* experience photo slots */
+.exp-photos{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.exp-photo{background:var(--bg);aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.exp-photo img,.exp-photo video{width:100%;height:100%;object-fit:cover;opacity:.65}
+
+/* ══ ABOUT ══ */
+.about-hero{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);min-height:40vh}
+.about-left{padding:4rem 3rem;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:flex-end}
+.about-hed{font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);font-style:italic;line-height:1.1;margin-bottom:1rem}
+.about-right{background:var(--card);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.about-right img{width:100%;height:100%;object-fit:cover;opacity:.6}
+.about-body-wrap{max-width:1200px;margin:0 auto;padding:4rem 3rem}
+.about-cols{display:grid;grid-template-columns:1fr 1px 1fr;margin-bottom:4rem}
+.about-col{padding:0 2.5rem}.about-col:first-child{padding-left:0}
+.about-col-div{background:var(--border)}
+.about-col-label{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem}
+.about-pull{font-family:var(--serif);font-style:italic;font-size:1.2rem;line-height:1.6;color:var(--accent);margin-bottom:1.2rem}
+.about-text{font-size:.86rem;color:var(--muted);line-height:1.9}
+.certs-section{border-top:1px solid var(--border);padding-top:3rem;margin-bottom:4rem}
+.certs-hd{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:2rem}
+.certs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.cert-card{background:var(--bg);padding:1.5rem}
+.cert-name{font-family:var(--serif);font-style:italic;font-size:1rem;margin-bottom:.3rem}
+.cert-issuer{font-size:.72rem;letter-spacing:.08em;color:var(--accent);margin-bottom:.3rem}
+.cert-date{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.resume-section{border-top:1px solid var(--border);padding-top:3rem;margin-bottom:4rem}
+.resume-hd{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:1.5rem}
+.resume-frame{border:1px solid var(--border);background:var(--card);aspect-ratio:8.5/11;max-width:680px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;overflow:hidden}
+.resume-frame img{width:100%;height:100%;object-fit:contain;opacity:.85}
+.resume-dl{display:inline-flex;align-items:center;gap:.5rem;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(122,159,194,.3);padding:.4rem 1rem;text-decoration:none;transition:border-color .2s}
+.resume-dl:hover{border-color:var(--accent)}
+.contact-bar{border-top:1px solid var(--border);padding:3rem;display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto}
+.contact-hed{font-family:var(--serif);font-style:italic;font-size:1.8rem}
+.contact-hed em{color:var(--accent)}
+.contact-links{display:flex;gap:1.5rem}
+.clink{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:.25rem;transition:color .2s,border-color .2s}
+.clink:hover{color:var(--accent);border-color:var(--accent)}
+footer{border-top:1px solid var(--border);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:1.2rem 2.5rem}
+footer p{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer p:last-child{text-align:right}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(8,9,13,.95);z-index:300;display:none;align-items:center;justify-content:center;padding:2rem;backdrop-filter:blur(10px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);max-width:900px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-hd{padding:1.5rem 2rem;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--border)}
+.modal-hd h3{font-family:var(--serif);font-style:italic;font-size:1.4rem;font-weight:400}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase}
+/* hero media */
+.modal-media{background:var(--bg);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.modal-media img,.modal-media video,.modal-media iframe{width:100%;height:100%;object-fit:cover;border:none}
+/* body */
+.modal-bd{padding:1.5rem 2rem 0}
+.modal-bd>p{font-size:.86rem;color:var(--muted);line-height:1.85}
+.modal-hint{font-size:.7rem;opacity:.35;margin-top:.8rem;letter-spacing:.06em;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+/* section labels */
+.modal-section-label{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;padding-top:1.5rem;border-top:1px solid var(--border)}
+.modal-section-label:first-of-type{border-top:none;padding-top:0}
+/* spec table */
+.modal-specs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-bottom:1.5rem}
+.modal-spec-cell{background:var(--bg);padding:1rem 1.2rem}
+.modal-spec-key{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem}
+.modal-spec-val{font-size:.88rem;color:var(--text);line-height:1.5}
+/* secondary media grid */
+.modal-media-grid{display:grid;gap:1px;background:var(--border);margin-bottom:1.5rem}
+.modal-media-grid.cols-2{grid-template-columns:1fr 1fr}
+.modal-media-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.modal-media-cell{background:var(--bg);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.modal-media-cell.tall{aspect-ratio:4/3}
+.modal-media-cell img,.modal-media-cell video{width:100%;height:100%;object-fit:cover;opacity:.75}
+/* notes / long text */
+.modal-notes{font-size:.84rem;color:var(--muted);line-height:1.9;margin-bottom:1.5rem}
+.modal-notes+.modal-notes{margin-top:-.5rem}
+/* two-col text */
+.modal-text-cols{display:grid;grid-template-columns:1fr 1px 1fr;gap:0;margin-bottom:1.5rem}
+.modal-text-col{padding:0 1.5rem}.modal-text-col:first-child{padding-left:0}
+.modal-text-col-div{background:var(--border)}
+.modal-text-col p{font-size:.84rem;color:var(--muted);line-height:1.9}
+/* links row */
+.modal-links{display:flex;gap:1rem;flex-wrap:wrap;padding:1.5rem 0;border-top:1px solid var(--border);margin-top:.5rem}
+.modal-link{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);text-decoration:none;border:1px solid rgba(122,159,194,.25);padding:.3rem .8rem;transition:border-color .2s}
+.modal-link:hover{border-color:var(--accent)}
+/* bottom padding */
+.modal-footer-pad{height:2rem}
+
+@media(max-width:768px){
+  .cover-name{font-size:3rem}
+  .fsae-hero,.about-hero{grid-template-columns:1fr}
+  .fsae-hero-right,.about-right{min-height:200px}
+  .proj-feature,.about-cols,.fsae-cols{grid-template-columns:1fr}
+  .proj-div,.about-col-div,.fsae-col-div,.exp-right-div{display:none}
+  .proj-meta{padding:0 0 1rem}
+  .fsae-gallery,.certs-grid,.fsae-sub-grid{grid-template-columns:1fr 1fr}
+  .proj-strip{grid-template-columns:1fr 1fr}
+  .exp-item{grid-template-columns:1fr}
+  .exp-left{padding-right:0;padding-bottom:2rem}
+  .contact-bar{flex-direction:column;gap:1.5rem;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<div id="bg-layer">
+  <canvas id="mesh"></canvas>
+  <div class="scanlines"></div>
+</div>
+
+<div id="content">
+<nav>
+  <div class="nav-id">
+    <span class="nav-name">Tuan T. Nguyen</span>
+    <span class="nav-sub">Aerodynamics · Engineering</span>
+  </div>
+  <ul class="nav-links">
+    <li><a onclick="go('home')" class="active" data-page="home">Home</a></li>
+    <li><a onclick="go('projects')" data-page="projects">Projects</a></li>
+    <li><a onclick="go('fsae')" data-page="fsae">FSAE</a></li>
+    <li><a onclick="go('experience')" data-page="experience">Experience</a></li>
+    <li><a onclick="go('about')" data-page="about">About</a></li>
+  </ul>
+</nav>
+
+<!-- ══ HOME ══ -->
+<div class="page active" id="page-home">
+  <div class="cover">
+    <!-- To add your hero video: replace the line below with
+         <video class="cover-media" src="YOUR_VIDEO_URL.mp4"></video>
+         It will autoplay, loop, and stay muted automatically. -->
+    <div class="cover-ph"><div class="cover-ph-icon">▶</div><div class="cover-ph-label">Hero GIF / Highlight Reel</div><div class="cover-ph-ratio">Recommended: 16:9</div></div>
+    <div class="cover-vignette"></div>
+    <div class="cover-overlay">
+      <div class="cover-top">
+        <div class="cover-tag">Engineering Portfolio</div>
+        <div class="cover-issue">Dallas, TX · 2026</div>
+      </div>
+      <div>
+        <div class="cover-vol">Aerodynamics · Fabrication · Electronics</div>
+        <div class="cover-name">Tuan T.<br><em>Nguyen</em></div>
+        <div class="cover-rule"></div>
+        <div class="cover-tagline">Aerodynamicist · Engineer · Builder · Watchmaker</div>
+        <div class="cover-bar">
+          <span class="cover-pill">Formula SAE</span>
+          <span class="cover-pill">CFD Simulation</span>
+          <span class="cover-pill">High Voltage</span>
+          <span class="cover-pill">Propulsion</span>
+        </div>
+      </div>
+    </div>
+    <div class="cover-scroll"><span class="cover-scroll-line"></span>Scroll</div>
+  </div>
+  <div class="home-strip">
+    <div class="strip-hd"><div class="strip-title">Featured Projects</div><button class="strip-btn" onclick="go('projects')">View all →</button></div>
+    <div class="proj-strip" id="proj-strip"></div>
+  </div>
+</div>
+
+<!-- ══ PROJECTS ══ -->
+<div class="page" id="page-projects">
+  <div class="page-wrap">
+    <div class="page-hd"><div class="page-title">Engineering Projects</div><div class="page-num">01 / Work</div></div>
+    <div id="proj-list"></div>
+  </div>
+</div>
+
+<!-- ══ FSAE ══ -->
+<div class="page" id="page-fsae">
+  <div class="fsae-hero">
+    <div class="fsae-hero-left">
+      <div class="fsae-kicker">Formula SAE · Dallas Formula Racing</div>
+      <div class="fsae-hed">Directing airflow<br>at competition speed.</div>
+      <p class="fsae-body-txt">As lead aerodynamicist for Dallas Formula Racing I directed the full aero package — front wings, diffusers, endplates, and CFD simulation pipelines. Led a team of engineers through design, iteration, and track validation.</p>
+      <div class="fsae-stats">
+        <div><div class="dl-val">Lead</div><div class="dl-lbl">Aerodynamicist</div></div>
+        <div><div class="dl-val">FSAE</div><div class="dl-lbl">Competition</div></div>
+        <div><div class="dl-val">CFD</div><div class="dl-lbl">Simulation</div></div>
+      </div>
+    </div>
+    <div class="fsae-hero-right">
+      <div class="media-ph"><div class="media-ph-icon">▶</div><div class="media-ph-label">FSAE Hero GIF / Photo</div><div class="media-ph-ratio">Recommended: 4:3 or taller</div></div>
+    </div>
+  </div>
+  <div class="fsae-gallery">
+    <div class="fsae-gal-cell"><div class="media-ph"><div class="media-ph-icon" style="width:34px;height:34px;font-size:.85rem">▶</div><div class="media-ph-label">Car Photo 1</div><div class="media-ph-ratio">Recommended: 4:3</div></div></div>
+    <div class="fsae-gal-cell"><div class="media-ph"><div class="media-ph-icon" style="width:34px;height:34px;font-size:.85rem">▶</div><div class="media-ph-label">Car Photo 2</div><div class="media-ph-ratio">Recommended: 4:3</div></div></div>
+    <div class="fsae-gal-cell"><div class="media-ph"><div class="media-ph-icon" style="width:34px;height:34px;font-size:.85rem">▶</div><div class="media-ph-label">CFD / Aero GIF</div><div class="media-ph-ratio">Recommended: 4:3</div></div></div>
+  </div>
+
+  <!-- FSAE Sub-Projects -->
+  <div class="fsae-subprojects">
+    <div class="fsae-sub-hd">
+      <div class="fsae-sub-title">Aero Projects & Studies</div>
+      <div style="font-size:.65rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)">02 / FSAE Work</div>
+    </div>
+    <div class="fsae-sub-grid" id="fsae-sub-grid"></div>
+  </div>
+
+  <div class="fsae-detail">
+    <div class="fsae-cols">
+      <div class="fsae-col" style="padding-left:0">
+        <div class="fsae-col-label">Role & Responsibilities</div>
+        <p class="fsae-col-body">Led a team of aerodynamics engineers responsible for the full aerodynamic package — front wing, rear wing, undertray, and diffuser. Managed simulation workflows from geometry import through post-processing and physical correlation.</p>
+      </div>
+      <div class="fsae-col-div"></div>
+      <div class="fsae-col">
+        <div class="fsae-col-label">Tools & Methods</div>
+        <p class="fsae-col-body">ANSYS Fluent, SolidWorks, hand calculations, wind tunnel correlation. Designed aero components to FSAE regulations with a focus on balance, efficiency, and manufacturability.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EXPERIENCE ══ -->
+<div class="page" id="page-experience">
+  <div class="page-wrap">
+    <div class="page-hd"><div class="page-title">Work Experience</div><div class="page-num">03 / Experience</div></div>
+    <div id="exp-list"></div>
+  </div>
+</div>
+
+<!-- ══ ABOUT ══ -->
+<div class="page" id="page-about">
+  <div class="about-hero">
+    <div class="about-left">
+      <div style="font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem">Profile</div>
+      <div class="about-hed">Engineer.<br><em>Builder.</em><br>Watchmaker.</div>
+    </div>
+    <div class="about-right">
+      <div class="media-ph"><div class="media-ph-icon">▶</div><div class="media-ph-label">Photo / Portrait</div><div class="media-ph-ratio">Recommended: 1:1 or 4:5 (portrait)</div></div>
+    </div>
+  </div>
+  <div class="about-body-wrap">
+    <div class="about-cols">
+      <div class="about-col" style="padding-left:0">
+        <div class="about-col-label">Bio</div>
+        <div class="about-pull">"Whether it's CFD or a watch movement — understand the physics, make it work, make it right."</div>
+        <p class="about-text">Full-time engineering student with a focus on aerodynamics and performance systems. As lead aerodynamicist for Dallas Formula Racing I directed design and testing of full aero packages for FSAE competition from the ground up.</p>
+      </div>
+      <div class="about-col-div"></div>
+      <div class="about-col">
+        <div class="about-col-label">Interests & Skills</div>
+        <p class="about-text" style="margin-bottom:1.2rem">Outside of school and racing I design and build watches — a craft I've turned into a small business. I'm drawn to projects that demand both rigorous analysis and hands-on making.</p>
+        <p class="about-text">Core competencies: aerodynamics, CFD simulation, CAD, fabrication, electronics design, high-voltage systems, and horology.</p>
+      </div>
+    </div>
+    <div class="certs-section">
+      <div class="certs-hd">Certifications & Training</div>
+      <div class="certs-grid" id="certs-grid"></div>
+    </div>
+    <div class="resume-section">
+      <div class="resume-hd">Résumé</div>
+      <div class="resume-frame">
+        <div class="media-ph"><div class="media-ph-icon" style="width:52px;height:52px;font-size:1.1rem">📄</div><div class="media-ph-label">Resume preview — drop image here</div><div class="media-ph-ratio">Recommended: 8.5:11 (US Letter)</div></div>
+        <a href="#" class="resume-dl">↓ Download PDF</a>
+      </div>
+    </div>
+  </div>
+  <div class="contact-bar">
+    <div class="contact-hed">Let's build <em>something.</em></div>
+    <div class="contact-links">
+      <a href="mailto:tuan@email.com" class="clink">Email</a>
+      <a href="#" class="clink">LinkedIn</a>
+      <a href="https://sites.google.com/view/tuan-nguyen-portfolio/home" target="_blank" class="clink">Old Site</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 Tuan T. Nguyen</p>
+  <p style="text-align:center">Dallas, TX</p>
+  <p>Aerodynamics · Engineering</p>
+</footer>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <!-- Header -->
+    <div class="modal-hd">
+      <div>
+        <div id="m-kicker" style="font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:.4rem"></div>
+        <h3 id="m-title"></h3>
+      </div>
+      <button class="modal-close" onclick="closeM()">Close ✕</button>
+    </div>
+
+    <!-- Hero media -->
+    <div class="modal-media" id="m-media"></div>
+
+    <!-- Body -->
+    <div class="modal-bd">
+      <!-- Tags + description -->
+      <div id="m-tags" style="display:flex;gap:.4rem;flex-wrap:wrap;margin:1rem 0 .8rem"></div>
+      <p id="m-desc" style="font-size:.86rem;color:var(--muted);line-height:1.85;margin-bottom:.6rem"></p>
+      <p class="modal-hint" id="m-hint"></p>
+
+      <!-- ── SPECS ── -->
+      <div class="modal-section-label" id="m-specs-label">Specifications</div>
+      <div class="modal-specs" id="m-specs">
+        <!-- filled by JS -->
+      </div>
+
+      <!-- ── OVERVIEW TEXT ── -->
+      <div class="modal-section-label">Overview</div>
+      <div class="modal-text-cols">
+        <div class="modal-text-col">
+          <p id="m-overview-left" class="modal-notes">Add detailed overview text here — design intent, problem statement, or background context for this project.</p>
+        </div>
+        <div class="modal-text-col-div"></div>
+        <div class="modal-text-col">
+          <p id="m-overview-right" class="modal-notes">Add supporting context here — constraints, goals, team structure, or timeline.</p>
+        </div>
+      </div>
+
+      <!-- ── SECONDARY MEDIA (2-up) ── -->
+      <div class="modal-section-label">Process & Build</div>
+      <div class="modal-media-grid cols-2" id="m-media-2up">
+        <div class="modal-media-cell tall"><div class="media-ph"><div class="media-ph-icon" style="width:36px;height:36px;font-size:.9rem">▶</div><div class="media-ph-label" style="font-size:.6rem">Process Photo / GIF 1</div><div class="media-ph-ratio">Recommended: 4:3</div></div></div>
+        <div class="modal-media-cell tall"><div class="media-ph"><div class="media-ph-icon" style="width:36px;height:36px;font-size:.9rem">▶</div><div class="media-ph-label" style="font-size:.6rem">Process Photo / GIF 2</div><div class="media-ph-ratio">Recommended: 4:3</div></div></div>
+      </div>
+
+      <!-- ── RESULTS / ANALYSIS ── -->
+      <div class="modal-section-label">Results & Analysis</div>
+      <p id="m-results" class="modal-notes">Add results, test data, performance numbers, or analysis findings here. What did you learn? What did the data show?</p>
+
+      <!-- ── TERTIARY MEDIA (3-up) ── -->
+      <div class="modal-section-label">Data, Renders & Additional Media</div>
+      <div class="modal-media-grid cols-3" id="m-media-3up">
+        <div class="modal-media-cell"><div class="media-ph"><div class="media-ph-icon" style="width:30px;height:30px;font-size:.75rem">▶</div><div class="media-ph-label" style="font-size:.56rem">Data Plot / Chart</div><div class="media-ph-ratio">16:9</div></div></div>
+        <div class="modal-media-cell"><div class="media-ph"><div class="media-ph-icon" style="width:30px;height:30px;font-size:.75rem">▶</div><div class="media-ph-label" style="font-size:.56rem">Render / CAD View</div><div class="media-ph-ratio">16:9</div></div></div>
+        <div class="modal-media-cell"><div class="media-ph"><div class="media-ph-icon" style="width:30px;height:30px;font-size:.75rem">▶</div><div class="media-ph-label" style="font-size:.56rem">Additional Media</div><div class="media-ph-ratio">16:9</div></div></div>
+      </div>
+
+      <!-- ── NOTES / LESSONS LEARNED ── -->
+      <div class="modal-section-label">Notes & Lessons Learned</div>
+      <div class="modal-text-cols">
+        <div class="modal-text-col">
+          <p id="m-notes-left" class="modal-notes">What worked well? Add design decisions, key insights, or things you'd do differently.</p>
+        </div>
+        <div class="modal-text-col-div"></div>
+        <div class="modal-text-col">
+          <p id="m-notes-right" class="modal-notes">Next steps, future iterations, or follow-on work stemming from this project.</p>
+        </div>
+      </div>
+
+      <!-- ── LINKS ── -->
+      <div class="modal-links">
+        <a href="#" class="modal-link">GitHub / Source →</a>
+        <a href="#" class="modal-link">Report / PDF →</a>
+        <a href="#" class="modal-link">Video →</a>
+      </div>
+
+      <div class="modal-footer-pad"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── MESH + BG ─────────────────────────────
+const cv=document.getElementById('mesh'),cx=cv.getContext('2d');
+let W,H,pts=[];
+const COLS=28,ROWS=18;
+function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}
+function buildGrid(){pts=[];for(let r=0;r<=ROWS;r++)for(let c=0;c<=COLS;c++)pts.push({bx:c/COLS*W,by:r/ROWS*H,ox:(Math.random()-.5)*22,oy:(Math.random()-.5)*22,px:Math.random()*Math.PI*2,py:Math.random()*Math.PI*2,fx:.2+Math.random()*.3,fy:.2+Math.random()*.3})}
+function pt(c,r){const p=pts[r*(COLS+1)+c],t=Date.now()*.001;return{x:p.bx+p.ox*Math.sin(t*p.fx+p.px),y:p.by+p.oy*Math.sin(t*p.fy+p.py)}}
+function drawMesh(){
+  cx.clearRect(0,0,W,H);
+  // faint dot at each node
+  for(let r=0;r<=ROWS;r++)for(let c=0;c<=COLS;c++){const{x,y}=pt(c,r);cx.beginPath();cx.arc(x,y,1,0,Math.PI*2);cx.fillStyle='rgba(122,159,194,0.12)';cx.fill()}
+  cx.lineWidth=.4;
+  for(let r=0;r<=ROWS;r++){cx.beginPath();for(let c=0;c<=COLS;c++){const{x,y}=pt(c,r);c===0?cx.moveTo(x,y):cx.lineTo(x,y)}cx.strokeStyle='rgba(122,159,194,0.055)';cx.stroke()}
+  for(let c=0;c<=COLS;c++){cx.beginPath();for(let r=0;r<=ROWS;r++){const{x,y}=pt(c,r);r===0?cx.moveTo(x,y):cx.lineTo(x,y)}cx.strokeStyle='rgba(122,159,194,0.04)';cx.stroke()}
+  requestAnimationFrame(drawMesh)
+}
+window.addEventListener('resize',()=>{resize();buildGrid()});resize();buildGrid();drawMesh();
+
+// ── AUTOPLAY/LOOP ALL VIDEOS ──────────────
+// Any <video> tag anywhere on the site (hero, project cards, FSAE, experience,
+// modals — including ones inserted later by JS) automatically gets muted
+// autoplay + loop. Just drop in <video src="your-file.mp4"></video> and it
+// will play on load and loop forever — no attributes needed by hand.
+function primeVideo(v){
+  if(v.dataset.primed)return;
+  v.dataset.primed='1';
+  v.autoplay=true;v.loop=true;v.muted=true;v.playsInline=true;
+  v.setAttribute('autoplay','');v.setAttribute('loop','');v.setAttribute('muted','');v.setAttribute('playsinline','');
+  v.removeAttribute('controls');
+  const tryPlay=()=>v.play().catch(()=>{/* will retry on canplay */});
+  if(v.readyState>=2)tryPlay();else v.addEventListener('loadeddata',tryPlay,{once:true});
+}
+document.querySelectorAll('video').forEach(primeVideo);
+new MutationObserver(muts=>{
+  muts.forEach(m=>m.addedNodes.forEach(node=>{
+    if(node.nodeType!==1)return;
+    if(node.tagName==='VIDEO')primeVideo(node);
+    node.querySelectorAll&&node.querySelectorAll('video').forEach(primeVideo);
+  }));
+}).observe(document.body,{childList:true,subtree:true});
+
+// ── ROUTING ──────────────────────────────
+function go(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.toggle('active',a.dataset.page===id));
+  window.scrollTo(0,0);
+}
+
+// ── DATA ─────────────────────────────────
+const projects=[
+  {n:"Trong 2",tags:["Fabrication","Mechanical"],category:"Fabrication",
+   desc:"Second generation Trong build — refined design and full fabrication from scratch.",
+   hint:"Replace media-ph with <img src='YOUR_GIF_URL'> or <video> tag.",
+   specs:[
+     {k:"Version",v:"Generation 2"},
+     {k:"Build Method",v:"[Add — e.g. CNC, hand fabrication]"},
+     {k:"Materials",v:"[Add — e.g. aluminum, steel, carbon]"},
+     {k:"Weight",v:"[Add value]"},
+     {k:"Timeline",v:"[Add duration]"},
+     {k:"Status",v:"[Complete / In Progress]"},
+   ]},
+  {n:"Rail Gun",tags:["Electronics","High Voltage"],category:"Electronics",
+   desc:"Electromagnetic coilgun with capacitor bank discharge system and switching electronics.",
+   hint:"Add discharge GIF or test video URL.",
+   specs:[
+     {k:"Type",v:"Electromagnetic Coilgun"},
+     {k:"Voltage",v:"[Add — e.g. 400 V]"},
+     {k:"Capacitance",v:"[Add — e.g. 4700 µF]"},
+     {k:"Projectile",v:"[Add material / mass]"},
+     {k:"Muzzle Velocity",v:"[Add measured value]"},
+     {k:"Switching",v:"[Add — e.g. SCR / IGBT / relay]"},
+   ]},
+  {n:"Project LMP",tags:["Aerodynamics","EV"],category:"Aerodynamics",
+   desc:"LMP-inspired aerodynamic and EV intake study for an electric vehicle platform.",
+   hint:"Add CFD visualization or build GIF.",
+   specs:[
+     {k:"Platform",v:"Electric Vehicle"},
+     {k:"Aero Style",v:"LMP-inspired"},
+     {k:"Simulation Tool",v:"[Add — e.g. ANSYS Fluent]"},
+     {k:"Cl Target",v:"[Add value]"},
+     {k:"Cd Target",v:"[Add value]"},
+     {k:"Status",v:"[Add]"},
+   ]},
+  {n:"Maximum Thrust A",tags:["Propulsion","Testing"],category:"Propulsion",
+   desc:"Phase A thrust generation study — test stand design, instrumentation, and data collection.",
+   hint:"Add test run video or thrust data animation.",
+   specs:[
+     {k:"Phase",v:"A — Baseline"},
+     {k:"Propellant",v:"[Add type]"},
+     {k:"Peak Thrust",v:"[Add measured value]"},
+     {k:"Burn Duration",v:"[Add]"},
+     {k:"Test Stand",v:"[Add description]"},
+     {k:"Instrumentation",v:"[Add sensors used]"},
+   ]},
+  {n:"Maximum Thrust B",tags:["Propulsion","Testing"],category:"Propulsion",
+   desc:"Phase B refines nozzle geometry and fuel parameters from the first test campaign.",
+   hint:"Add phase B test footage.",
+   specs:[
+     {k:"Phase",v:"B — Refined"},
+     {k:"Nozzle Change",v:"[Add geometry delta]"},
+     {k:"Fuel Change",v:"[Add parameter delta]"},
+     {k:"Peak Thrust",v:"[Add measured value]"},
+     {k:"vs Phase A",v:"[Add delta / % improvement]"},
+     {k:"Status",v:"[Add]"},
+   ]},
+  {n:"Electro Flash Bang",tags:["Electronics","Pyro"],category:"Electronics",
+   desc:"High-energy electrical discharge device — controlled flash and concussive output.",
+   hint:"Add demo video or discharge GIF.",
+   specs:[
+     {k:"Output",v:"Flash + Concussive"},
+     {k:"Energy",v:"[Add — e.g. joules]"},
+     {k:"Trigger",v:"[Add — electronic / manual]"},
+     {k:"Discharge Time",v:"[Add]"},
+     {k:"Safety",v:"[Add safety systems]"},
+     {k:"Status",v:"[Add]"},
+   ]},
+  {n:"Trong 1",tags:["Fabrication","Prototype"],category:"Fabrication",
+   desc:"First generation Trong prototype — proof of concept and baseline design language.",
+   hint:"Add build timelapse or finished product GIF.",
+   specs:[
+     {k:"Version",v:"Generation 1 — Prototype"},
+     {k:"Purpose",v:"Proof of Concept"},
+     {k:"Build Method",v:"[Add]"},
+     {k:"Materials",v:"[Add]"},
+     {k:"Key Learnings",v:"[Add what informed Gen 2]"},
+     {k:"Status",v:"Complete"},
+   ]},
+  {n:"If All Else Fails",tags:["Experimental"],category:"Experimental",
+   desc:"An experimental last-resort engineering solution. Unconventional — but it works.",
+   hint:"Add GIF or video.",
+   specs:[
+     {k:"Type",v:"Experimental"},
+     {k:"Approach",v:"[Add — unconventional method]"},
+     {k:"Problem Solved",v:"[Add description]"},
+     {k:"Materials",v:"[Add]"},
+     {k:"Outcome",v:"[Add result]"},
+     {k:"Status",v:"[Add]"},
+   ]},
+];
+
+const fsaeProjects=[
+  {n:"Front Wing Design",tags:["Aerodynamics","CFD"],category:"Aero Package",
+   desc:"Multi-element front wing optimized for downforce distribution and endplate efficiency. Simulated and iterated through 12 design revisions.",hint:"Add CFD streamline GIF or wing photo.",
+   specs:[
+     {k:"Elements",v:"[Add — e.g. 3-element]"},
+     {k:"Span",v:"[Add dimension]"},
+     {k:"Cl (Lift Coeff.)",v:"[Add CFD result]"},
+     {k:"Cd (Drag Coeff.)",v:"[Add CFD result]"},
+     {k:"Design Iterations",v:"12"},
+     {k:"Tool",v:"ANSYS Fluent"},
+   ]},
+  {n:"Rear Diffuser",tags:["Aerodynamics","Undertray"],category:"Aero Package",
+   desc:"Underbody diffuser package designed to maximize ground-effect downforce within FSAE regulations.",hint:"Add diffuser photo or CFD pressure plot.",
+   specs:[
+     {k:"Type",v:"Ground-Effect Diffuser"},
+     {k:"Expansion Angle",v:"[Add — e.g. 12°]"},
+     {k:"Width",v:"[Add dimension]"},
+     {k:"Downforce (CFD)",v:"[Add value]"},
+     {k:"Regulation",v:"FSAE Compliant"},
+     {k:"Tool",v:"ANSYS Fluent"},
+   ]},
+  {n:"Full Car CFD Study",tags:["CFD","ANSYS"],category:"Simulation",
+   desc:"Full vehicle aerodynamic simulation — combined front/rear wing, undertray, and bodywork interaction analysis.",hint:"Add CFD visualization GIF.",
+   specs:[
+     {k:"Scope",v:"Full Vehicle"},
+     {k:"Mesh Size",v:"[Add — e.g. 12M cells]"},
+     {k:"Turbulence Model",v:"[Add — e.g. k-ω SST]"},
+     {k:"Total Cl",v:"[Add result]"},
+     {k:"Total Cd",v:"[Add result]"},
+     {k:"Aero Balance",v:"[Add % front / rear]"},
+   ]},
+  {n:"Endplate Optimization",tags:["Aerodynamics","Testing"],category:"Component Study",
+   desc:"Parametric study of endplate geometries to reduce induced drag and improve front wing efficiency.",hint:"Add endplate comparison images.",
+   specs:[
+     {k:"Variants Tested",v:"[Add number]"},
+     {k:"Geometry Range",v:"[Add — e.g. cant angle sweep]"},
+     {k:"Drag Reduction",v:"[Add % delta vs baseline]"},
+     {k:"Method",v:"Parametric CFD Study"},
+     {k:"Tool",v:"ANSYS Fluent / SolidWorks"},
+     {k:"Outcome",v:"[Add selected geometry]"},
+   ]},
+  {n:"Aero Balance Tuning",tags:["Testing","Data"],category:"Track Work",
+   desc:"Track-side aerodynamic balance adjustment process — correlating simulation predictions with physical handling data.",hint:"Add data plot or track photo.",
+   specs:[
+     {k:"Method",v:"Track Correlation"},
+     {k:"Sensors",v:"[Add — e.g. load cells, IMU]"},
+     {k:"Target Balance",v:"[Add % front]"},
+     {k:"Achieved Balance",v:"[Add measured result]"},
+     {k:"Conditions",v:"[Add track / event]"},
+     {k:"Outcome",v:"[Add handling improvement]"},
+   ]},
+  {n:"[Add FSAE Project]",tags:["FSAE"],category:"FSAE",
+   desc:"Add your own FSAE sub-project here — testing, design studies, components, or competition results.",hint:"Add media and update description.",
+   specs:[
+     {k:"[Spec 1]",v:"[Value]"},
+     {k:"[Spec 2]",v:"[Value]"},
+     {k:"[Spec 3]",v:"[Value]"},
+     {k:"[Spec 4]",v:"[Value]"},
+     {k:"[Spec 5]",v:"[Value]"},
+     {k:"[Spec 6]",v:"[Value]"},
+   ]},
+];
+
+const experience=[
+  {role:"Lead Aerodynamicist",org:"Dallas Formula Racing — FSAE",date:"2023 – Present",desc:"Directed full aero package design for competition vehicle.",bullets:["Designed front wing, rear wing, diffuser, and endplates","Led team of 4 aerodynamics engineers","Built and managed CFD simulation pipeline in ANSYS Fluent","Correlated simulation data with physical testing results"],photos:["Work Photo 1","Work Photo 2"]},
+  {role:"[Your Role Here]",org:"[Company / Organization]",date:"[Date Range]",desc:"Add your work experience here — internships, co-ops, part-time roles.",bullets:["Responsibility or achievement 1","Responsibility or achievement 2","Responsibility or achievement 3"],photos:["Work Photo 1","Work Photo 2"]},
+  {role:"[Your Role Here]",org:"[Company / Organization]",date:"[Date Range]",desc:"Add another position here.",bullets:["Responsibility or achievement 1","Responsibility or achievement 2"],photos:["Work Photo 1","Work Photo 2"]},
+  {role:"Watch Design & Fabrication",org:"Independent — Small Business",date:"2022 – Present",desc:"Designed, fabricated, and sold custom timepieces.",bullets:["Machined and hand-finished watch cases and components","Assembled mechanical movements","Managed customer orders and custom commissions"],photos:["Watch Photo 1","Watch Photo 2"]},
+];
+
+const certs=[
+  {name:"[Certification Name]",issuer:"[Issuing Body]",date:"[Year]"},
+  {name:"[Certification Name]",issuer:"[Issuing Body]",date:"[Year]"},
+  {name:"[Certification Name]",issuer:"[Issuing Body]",date:"[Year]"},
+];
+
+// home strip
+const strip=document.getElementById('proj-strip');
+projects.slice(0,4).forEach((p,i)=>{
+  const d=document.createElement('div');d.className='psc';d.onclick=()=>{go('projects');setTimeout(()=>openM(i),80)};
+  d.innerHTML=`<div class="psc-num">0${i+1}</div><div class="psc-media"><div class="media-ph" style="gap:.5rem"><div class="media-ph-icon" style="width:44px;height:44px;font-size:1rem">▶</div><div class="media-ph-label" style="font-size:.62rem">${p.n}</div><div class="media-ph-ratio">Recommended: 16:10</div></div></div><div class="psc-title">${p.n}</div><div class="psc-tags">${p.tags.map(t=>`<span class="tag-sm">${t}</span>`).join('')}</div><span class="psc-arrow">→</span>`;
+  strip.appendChild(d);
+});
+
+// project list
+const list=document.getElementById('proj-list');
+projects.forEach((p,i)=>{
+  const d=document.createElement('div');d.className='proj-feature';
+  d.innerHTML=`<div class="proj-meta"><div class="proj-num">0${i+1}</div><div class="proj-title-ed" onclick="openM(${i})">${p.n}</div><div class="proj-tags-ed">${p.tags.map(t=>`<span class="tag-ed">${t}</span>`).join('')}</div></div><div class="proj-div"></div><div><div class="proj-media-ed"><div class="media-ph"><div class="media-ph-icon">▶</div><div class="media-ph-label">${p.n} — GIF / Video</div><div class="media-ph-ratio">Recommended: 16:7 (wide)</div></div></div><p class="proj-desc-ed">${p.desc}</p><button class="proj-read" onclick="openM(${i})">Read more →</button></div>`;
+  list.appendChild(d);
+});
+
+// fsae sub-projects
+const fsg=document.getElementById('fsae-sub-grid');
+fsaeProjects.forEach((p,i)=>{
+  const d=document.createElement('div');d.className='fsae-sub-card';d.onclick=()=>openFsaeModal(i);
+  d.innerHTML=`<div class="fsae-sub-media"><div class="media-ph"><div class="media-ph-icon" style="width:32px;height:32px;font-size:.8rem">▶</div><div class="media-ph-label" style="font-size:.58rem">${p.n}</div><div class="media-ph-ratio">Recommended: 16:9</div></div></div><div class="fsae-sub-num">0${i+1}</div><div class="fsae-sub-name">${p.n}</div><div class="fsae-sub-desc">${p.desc}</div><div class="fsae-sub-tags" style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.6rem">${p.tags.map(t=>`<span class="tag-sm">${t}</span>`).join('')}</div><span class="fsae-sub-arrow">→ Details</span>`;
+  fsg.appendChild(d);
+});
+
+// experience
+const expEl=document.getElementById('exp-list');
+experience.forEach(e=>{
+  const d=document.createElement('div');d.className='exp-item';
+  d.innerHTML=`
+    <div class="exp-left">
+      <div class="exp-date">${e.date}</div>
+      <div class="exp-org">${e.org}</div>
+      <div class="exp-role">${e.role}</div>
+      <p class="exp-desc">${e.desc}</p>
+      <ul class="exp-bullets">${e.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>
+    </div>
+    <div class="exp-right-div"></div>
+    <div class="exp-right">
+      <div style="font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem">Photos</div>
+      <div class="exp-photos">
+        ${e.photos.map(ph=>`<div class="exp-photo"><div class="media-ph" style="gap:.4rem"><div class="media-ph-icon" style="width:30px;height:30px;font-size:.7rem">▶</div><div class="media-ph-label" style="font-size:.56rem">${ph}</div><div class="media-ph-ratio">Recommended: 4:3</div></div></div>`).join('')}
+      </div>
+    </div>`;
+  expEl.appendChild(d);
+});
+
+// certs
+const certsEl=document.getElementById('certs-grid');
+certs.forEach(c=>{
+  const d=document.createElement('div');d.className='cert-card';
+  d.innerHTML=`<div class="cert-name">${c.name}</div><div class="cert-issuer">${c.issuer}</div><div class="cert-date">${c.date}</div>`;
+  certsEl.appendChild(d);
+});
+
+// modals
+function populateModal(p, categoryLabel){
+  document.getElementById('m-kicker').textContent = categoryLabel || p.category || '';
+  document.getElementById('m-title').textContent = p.n;
+  document.getElementById('m-media').innerHTML=`<div class="media-ph"><div class="media-ph-icon">▶</div><div class="media-ph-label">${p.n} — Hero GIF / Video</div><div class="media-ph-ratio">Recommended: 16:9</div></div>`;
+  document.getElementById('m-tags').innerHTML=p.tags.map(t=>`<span class="tag-ed">${t}</span>`).join('');
+  document.getElementById('m-desc').textContent=p.desc;
+  document.getElementById('m-hint').textContent='💡 '+p.hint;
+  // specs
+  const specsEl=document.getElementById('m-specs');
+  if(p.specs && p.specs.length){
+    specsEl.innerHTML=p.specs.map(s=>`<div class="modal-spec-cell"><div class="modal-spec-key">${s.k}</div><div class="modal-spec-val">${s.v}</div></div>`).join('');
+    document.getElementById('m-specs-label').style.display='';
+    specsEl.style.display='';
+  } else {
+    document.getElementById('m-specs-label').style.display='none';
+    specsEl.style.display='none';
+  }
+  document.getElementById('modal').classList.add('open');
+}
+function openM(i){populateModal(projects[i], 'Engineering Project')}
+function openFsaeModal(i){populateModal(fsaeProjects[i], 'FSAE · Dallas Formula Racing')}
+function closeM(){document.getElementById('modal').classList.remove('open')}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeM()});
+</script>
+</body>
+</html>
