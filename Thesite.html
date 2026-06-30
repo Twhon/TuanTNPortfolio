@@ -60,7 +60,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 
 /* ══ HOME ══ */
 .cover{position:relative;height:calc(100vh - 60px);overflow:hidden;border-bottom:1px solid var(--border)}
-.cover-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.cover-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.90}
 .cover-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.8rem;background:rgba(8,9,13,.2)}
 .cover-ph-icon{width:60px;height:60px;border:1px dashed rgba(122,159,194,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
 .cover-ph-label{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(122,159,194,.3)}
@@ -295,7 +295,7 @@ footer p:last-child{text-align:right}
     <!-- To add your hero video: replace the line below with
          <video class="cover-media" src="YOUR_VIDEO_URL.mp4"></video>
          It will autoplay, loop, and stay muted automatically. -->
-    <div class="cover-ph"><div class="cover-ph-icon">▶</div><div class="cover-ph-label">Hero GIF / Highlight Reel</div><div class="cover-ph-ratio">Recommended: 16:9</div></div>
+    <img class="cover-media" src="https://raw.githubusercontent.com/Twhon/Portfolio/main/Pic/ah3(1).jpg" alt="Cover">
     <div class="cover-vignette"></div>
     <div class="cover-overlay">
       <div class="cover-top">
@@ -310,8 +310,8 @@ footer p:last-child{text-align:right}
         <div class="cover-bar">
           <span class="cover-pill">Formula SAE</span>
           <span class="cover-pill">CFD Simulation</span>
-          <span class="cover-pill">High Voltage</span>
-          <span class="cover-pill">Propulsion</span>
+          <span class="cover-pill">Mechanical Design</span>
+          <span class="cover-pill">Horology</span>
         </div>
       </div>
     </div>
@@ -436,7 +436,7 @@ footer p:last-child{text-align:right}
 <footer>
   <p>© 2026 Tuan T. Nguyen</p>
   <p style="text-align:center">Dallas, TX</p>
-  <p>Aerodynamics · Engineering</p>
+  <p>Portfolio</p>
 </footer>
 </div>
 
@@ -530,11 +530,11 @@ let W,H,pts=[];
 const COLS=28,ROWS=18;
 function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}
 function buildGrid(){pts=[];for(let r=0;r<=ROWS;r++)for(let c=0;c<=COLS;c++)pts.push({bx:c/COLS*W,by:r/ROWS*H,ox:(Math.random()-.5)*22,oy:(Math.random()-.5)*22,px:Math.random()*Math.PI*2,py:Math.random()*Math.PI*2,fx:.2+Math.random()*.3,fy:.2+Math.random()*.3})}
-function pt(c,r){const p=pts[r*(COLS+1)+c],t=Date.now()*.001;return{x:p.bx+p.ox*Math.sin(t*p.fx+p.px),y:p.by+p.oy*Math.sin(t*p.fy+p.py)}}
+function pt(c,r){const p=pts[r*(COLS+1)+c],t=Date.now()*.002;return{x:p.bx+p.ox*Math.sin(t*p.fx+p.px),y:p.by+p.oy*Math.sin(t*p.fy+p.py)}}
 function drawMesh(){
   cx.clearRect(0,0,W,H);
   // faint dot at each node
-  for(let r=0;r<=ROWS;r++)for(let c=0;c<=COLS;c++){const{x,y}=pt(c,r);cx.beginPath();cx.arc(x,y,1,0,Math.PI*2);cx.fillStyle='rgba(122,159,194,0.12)';cx.fill()}
+  for(let r=0;r<=ROWS;r++)for(let c=0;c<=COLS;c++){const{x,y}=pt(c,r);cx.beginPath();cx.arc(x,y,1,0,Math.PI*2);cx.fillStyle='rgba(122,159,194,0.45)';cx.fill()}
   cx.lineWidth=.4;
   for(let r=0;r<=ROWS;r++){cx.beginPath();for(let c=0;c<=COLS;c++){const{x,y}=pt(c,r);c===0?cx.moveTo(x,y):cx.lineTo(x,y)}cx.strokeStyle='rgba(122,159,194,0.055)';cx.stroke()}
   for(let c=0;c<=COLS;c++){cx.beginPath();for(let r=0;r<=ROWS;r++){const{x,y}=pt(c,r);r===0?cx.moveTo(x,y):cx.lineTo(x,y)}cx.strokeStyle='rgba(122,159,194,0.04)';cx.stroke()}
